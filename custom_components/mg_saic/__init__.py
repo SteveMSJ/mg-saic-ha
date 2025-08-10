@@ -4,8 +4,11 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from .api import SAICMGAPIClient
 from .coordinator import SAICMGDataUpdateCoordinator
-from .const import DOMAIN, LOGGER, PLATFORMS
+from .message_handler import SAICMGMessageHandler
+from .const import DOMAIN, LOGGER, PLATFORMS, UPDATE_INTERVAL_MESSAGES
 from .services import async_setup_services, async_unload_services
+from datetime import timedelta
+from homeassistant.helpers.event import async_track_time_interval
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
@@ -43,6 +46,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
 
         hass.data[DOMAIN][entry.entry_id] = client
 
+        # Setup vehicle coordinator
         coordinator = SAICMGDataUpdateCoordinator(hass, client, entry)
         await coordinator.async_setup()
 
@@ -61,6 +65,23 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
         await async_setup_services(hass, client, coordinator)
 
         LOGGER.info("MG SAIC integration setup completed successfully.")
+
+        # Setup message handler if one not already setup
+        if not (hass.data[DOMAIN].get("message_handler", None)):
+            message_handler = SAICMGMessageHandler(hass, client)
+
+            async def _check_messages(_now):
+                await message_handler.check_for_new_messages()
+
+            # Setup track_time_interval to regularly check for new vehicle start messages
+            message_handler_cancel = async_track_time_interval(
+                hass, _check_messages, UPDATE_INTERVAL_MESSAGES
+            )
+            LOGGER.info("MG SAIC Vehicle Start Message Handler created.")
+            # Mark that a handler has been set up as only one is required per account
+            # Don't want multiple handlers set up if more than one vehicle registered
+            hass.data[DOMAIN].setdefault("message_handler", message_handler_cancel)
+
         return True
     except Exception as e:
         LOGGER.error("Failed to set up MG SAIC integration: %s", e)
