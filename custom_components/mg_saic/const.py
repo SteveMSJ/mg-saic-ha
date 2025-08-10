@@ -105,6 +105,7 @@ CHARGING_VOLTAGE_FACTOR = 0.25
 UPDATE_INTERVAL = timedelta(minutes=60)
 UPDATE_INTERVAL_CHARGING = timedelta(minutes=10)
 UPDATE_INTERVAL_POWERED = timedelta(minutes=15)
+UPDATE_INTERVAL_MESSAGES = timedelta(seconds=60)
 
 # Additional Update Intervals
 UPDATE_INTERVAL_AFTER_SHUTDOWN = timedelta(minutes=2)

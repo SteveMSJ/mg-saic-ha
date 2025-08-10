@@ -8,6 +8,7 @@ from saic_ismart_client_ng.api.vehicle_charging import (
     ChargeCurrentLimitCode as ExternalChargeCurrentLimitCode,
 )
 from .const import LOGGER, REGION_BASE_URIS, BatterySoc, ChargeCurrentLimitOption
+import datetime
 
 
 class SAICMGAPIClient:
@@ -97,6 +98,34 @@ class SAICMGAPIClient:
             LOGGER.error("Failed to log in to MG SAIC API: %s", e)
             self.saic_api = None
             raise
+
+    # VEHICLE MESSAGES
+    async def get_alarm_list(self, page_num, page_size):
+        """Retrieve alarm message list."""
+        try:
+            message_list = await self._make_api_call(
+                self.saic_api.get_alarm_list, page_num=page_num, page_size=page_size
+            )
+            return message_list
+        except Exception as e:
+            LOGGER.error("Error retrieving message list: %s", e)
+            return None
+
+    async def read_message(self, message_id) -> None:
+        """Mark messages as read."""
+        try:
+            await self._make_api_call(self.saic_api.read_message, message_id=message_id)
+        except Exception as e:
+            LOGGER.error("Error marking message as read: %s", e)
+
+    async def delete_message(self, message_id) -> None:
+        """Delete message."""
+        try:
+            await self._make_api_call(
+                self.saic_api.delete_message, message_id=message_id
+            )
+        except Exception as e:
+            LOGGER.error("Error deleting message: %s", e)
 
     # GET VEHICLE DATA
     async def get_charging_info(self):

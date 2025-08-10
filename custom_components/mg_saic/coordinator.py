@@ -91,7 +91,10 @@ class SAICMGDataUpdateCoordinator(DataUpdateCoordinator):
             )
 
         # Base update intervals
-        self.update_interval = get_interval("update_interval", UPDATE_INTERVAL)
+        ## steveMSJ introduced update_interval_idle as configuration update_interval
+        ## was being ignored and set to const UPDATE_INTERVAL
+        self.update_interval_idle = get_interval("update_interval", UPDATE_INTERVAL)
+        self.update_interval = self.update_interval_idle
         self.charging_update_interval = get_interval(
             "charging_update_interval", UPDATE_INTERVAL_CHARGING
         )
@@ -155,7 +158,7 @@ class SAICMGDataUpdateCoordinator(DataUpdateCoordinator):
 
         LOGGER.debug(
             f"Update intervals initialized: "
-            f"Default: {self.update_interval}, "
+            f"Default: {self.update_interval_idle}, "
             f"Charging: {self.charging_update_interval}, "
             f"Powered: {self.powered_update_interval}, "
             f"After Shutdown: {self.after_shutdown_update_interval}, "
@@ -197,7 +200,7 @@ class SAICMGDataUpdateCoordinator(DataUpdateCoordinator):
             )
 
         # Update all update intervals
-        self.update_interval = get_interval("update_interval", UPDATE_INTERVAL)
+        self.update_interval_idle = get_interval("update_interval", UPDATE_INTERVAL)
         self.charging_update_interval = get_interval(
             "charging_update_interval", UPDATE_INTERVAL_CHARGING
         )
@@ -266,7 +269,7 @@ class SAICMGDataUpdateCoordinator(DataUpdateCoordinator):
 
         LOGGER.debug(
             f"Update intervals updated via options: "
-            f"Default: {self.update_interval}, "
+            f"Default: {self.update_interval_idle}, "
             f"Charging: {self.charging_update_interval}, "
             f"Powered: {self.powered_update_interval}, "
             f"After Shutdown: {self.after_shutdown_update_interval}, "
@@ -673,7 +676,9 @@ class SAICMGDataUpdateCoordinator(DataUpdateCoordinator):
             self.update_interval = self.after_shutdown_update_interval
             LOGGER.debug("Within shutdown window. Using shutdown interval.")
         else:
-            self.update_interval = UPDATE_INTERVAL  # Use the default update interval
+            self.update_interval = (
+                self.update_interval_idle
+            )  # Use the idle update interval
             LOGGER.debug("No recent activity. Using default update interval.")
 
         # Log and schedule the next refresh
